@@ -2,7 +2,10 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
 
     <title>Quadro Branco</title>
 
@@ -13,120 +16,192 @@
             padding: 0;
         }
 
+        html,
         body {
-            font-family: Arial, sans-serif;
-            background: #eeeeee;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
+
+            font-family: Arial, sans-serif;
+            background: white;
         }
 
-        /* Barra superior */
+        /* =========================
+           BARRA DE FERRAMENTAS
+           ========================= */
+
         .toolbar {
-            height: 60px;
-            background: #222;
-            color: white;
+            position: fixed;
+
+            top: 0;
+            left: 0;
+
+            width: 100%;
+
+            min-height: 60px;
 
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
 
-            padding: 10px 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            padding:
+                10px
+                max(10px, env(safe-area-inset-right))
+                10px
+                max(10px, env(safe-area-inset-left));
 
-            z-index: 10;
+            background: #222;
+            color: white;
+
+            z-index: 100;
+
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.3);
         }
 
         .toolbar h1 {
             font-size: 18px;
             margin-right: auto;
+            white-space: nowrap;
         }
 
         .toolbar button {
             border: none;
             border-radius: 8px;
 
-            padding: 10px 15px;
+            padding: 10px 14px;
 
             background: #444;
             color: white;
 
-            cursor: pointer;
             font-size: 14px;
+
+            cursor: pointer;
         }
 
-        .toolbar button:hover {
-            background: #555;
+        .toolbar button:active {
+            transform: scale(0.96);
         }
 
         .brush-control {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .brush-control input {
-            width: 100px;
+            width: 90px;
         }
 
-        /* Área do quadro */
-        .board-container {
-            flex: 1;
-            position: relative;
-
-            background: white;
-
-            overflow: hidden;
-        }
-
-        canvas {
-            position: absolute;
-
-            left: 0;
-            top: 0;
-
-            width: 100%;
-            height: 100%;
-
-            cursor: crosshair;
-
-            touch-action: none;
-        }
-
-        /* Indicador da cor atual */
         .color-indicator {
             width: 25px;
             height: 25px;
+
+            flex-shrink: 0;
 
             border-radius: 50%;
 
             border: 2px solid white;
 
-            box-shadow: 0 0 0 1px #777;
+            box-shadow:
+                0 0 0 1px #777;
         }
+
+        /* =========================
+           QUADRO
+           ========================= */
+
+        .board {
+            position: fixed;
+
+            top: 60px;
+            left: 0;
+
+            width: 100%;
+            height: calc(100% - 60px);
+
+            background: white;
+        }
+
+        canvas {
+            display: block;
+
+            width: 100%;
+            height: 100%;
+
+            touch-action: none;
+
+            cursor: crosshair;
+        }
+
+        /* =========================
+           MODO FULLSCREEN
+           ========================= */
+
+        :fullscreen .toolbar {
+            min-height: 55px;
+        }
+
+        :fullscreen .board {
+            top: 55px;
+            height: calc(100% - 55px);
+        }
+
+        /* =========================
+           CELULAR
+           ========================= */
 
         @media (max-width: 600px) {
 
             .toolbar {
-                height: auto;
-                min-height: 60px;
+                min-height: 55px;
 
-                flex-wrap: wrap;
-                gap: 8px;
+                padding: 8px;
+
+                gap: 6px;
             }
 
             .toolbar h1 {
-                width: 100%;
-                margin: 0;
+                display: none;
+            }
+
+            .brush-control span:first-child {
+                display: none;
             }
 
             .brush-control input {
-                width: 80px;
+                width: 75px;
             }
 
             .toolbar button {
-                padding: 8px 12px;
+                padding: 9px 10px;
+                font-size: 13px;
+            }
+
+            .color-indicator {
+                width: 23px;
+                height: 23px;
+            }
+
+            .board {
+                top: 55px;
+                height: calc(100% - 55px);
+            }
+        }
+
+        /* =========================
+           TELA MUITO PEQUENA
+           ========================= */
+
+        @media (max-width: 380px) {
+
+            .brush-control input {
+                width: 60px;
+            }
+
+            .toolbar button {
+                padding: 8px;
+                font-size: 12px;
             }
         }
     </style>
@@ -134,22 +209,30 @@
 
 <body>
 
+    <!-- =========================
+         BARRA
+         ========================= -->
+
     <div class="toolbar">
 
         <h1>🎨 Quadro Branco</h1>
 
         <div class="brush-control">
+
             <span>🖌️</span>
 
             <input
-                type="range"
                 id="brushSize"
+                type="range"
                 min="1"
                 max="50"
                 value="5"
             >
 
-            <span id="brushSizeValue">5</span>
+            <span id="brushSizeValue">
+                5
+            </span>
+
         </div>
 
         <div
@@ -158,126 +241,204 @@
         ></div>
 
         <button id="clearButton">
-            🗑️ Limpar
+            🗑️
+        </button>
+
+        <button id="fullscreenButton">
+            ⛶
         </button>
 
     </div>
 
-    <div class="board-container">
 
-        <canvas id="board"></canvas>
+    <!-- =========================
+         QUADRO
+         ========================= -->
 
-    </div>
+    <main class="board">
+
+        <canvas id="canvas"></canvas>
+
+    </main>
+
 
     <script>
 
-        const canvas = document.getElementById("board");
-        const ctx = canvas.getContext("2d");
+        // =====================================
+        // ELEMENTOS
+        // =====================================
 
-        const brushSize = document.getElementById("brushSize");
-        const brushSizeValue = document.getElementById("brushSizeValue");
-        const clearButton = document.getElementById("clearButton");
-        const colorIndicator = document.getElementById("colorIndicator");
+        const canvas =
+            document.getElementById("canvas");
+
+        const ctx =
+            canvas.getContext("2d");
+
+        const brushSize =
+            document.getElementById("brushSize");
+
+        const brushSizeValue =
+            document.getElementById("brushSizeValue");
+
+        const clearButton =
+            document.getElementById("clearButton");
+
+        const fullscreenButton =
+            document.getElementById("fullscreenButton");
+
+        const colorIndicator =
+            document.getElementById("colorIndicator");
+
+
+        // =====================================
+        // VARIÁVEIS
+        // =====================================
 
         let drawing = false;
 
         let currentColor = randomColor();
 
 
-        /*
-         * Ajusta o tamanho real do canvas
-         * de acordo com o tamanho da tela.
-         */
-        function resizeCanvas() {
+        // =====================================
+        // CORES ALEATÓRIAS
+        // =====================================
 
-            const rect = canvas.getBoundingClientRect();
-
-            // Guarda o desenho atual
-            const image = canvas.width > 0 && canvas.height > 0
-                ? canvas.toDataURL()
-                : null;
-
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-
-            // Fundo branco
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Restaura o desenho
-            if (image) {
-
-                const img = new Image();
-
-                img.onload = () => {
-                    ctx.drawImage(
-                        img,
-                        0,
-                        0,
-                        canvas.width,
-                        canvas.height
-                    );
-                };
-
-                img.src = image;
-            }
-        }
-
-
-        /*
-         * Gera uma cor RGB aleatória.
-         */
         function randomColor() {
 
-            const r = Math.floor(Math.random() * 256);
-            const g = Math.floor(Math.random() * 256);
-            const b = Math.floor(Math.random() * 256);
+            const r =
+                Math.floor(Math.random() * 256);
+
+            const g =
+                Math.floor(Math.random() * 256);
+
+            const b =
+                Math.floor(Math.random() * 256);
 
             return `rgb(${r}, ${g}, ${b})`;
         }
 
 
-        /*
-         * Atualiza o indicador da cor.
-         */
+        // =====================================
+        // INDICADOR DE COR
+        // =====================================
+
         function updateColorIndicator() {
 
-            colorIndicator.style.backgroundColor = currentColor;
+            colorIndicator.style.backgroundColor =
+                currentColor;
         }
 
 
-        /*
-         * Obtém a posição do mouse/toque
-         * dentro do canvas.
-         */
+        // =====================================
+        // AJUSTAR CANVAS
+        // =====================================
+
+        function resizeCanvas() {
+
+            const rect =
+                canvas.getBoundingClientRect();
+
+            const oldCanvas =
+                document.createElement("canvas");
+
+            oldCanvas.width =
+                canvas.width;
+
+            oldCanvas.height =
+                canvas.height;
+
+            const oldCtx =
+                oldCanvas.getContext("2d");
+
+            if (
+                canvas.width > 0 &&
+                canvas.height > 0
+            ) {
+
+                oldCtx.drawImage(
+                    canvas,
+                    0,
+                    0
+                );
+            }
+
+            canvas.width =
+                rect.width;
+
+            canvas.height =
+                rect.height;
+
+            // Fundo branco
+            ctx.fillStyle = "white";
+
+            ctx.fillRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            // Recupera desenho anterior
+            if (
+                oldCanvas.width > 0 &&
+                oldCanvas.height > 0
+            ) {
+
+                ctx.drawImage(
+                    oldCanvas,
+                    0,
+                    0,
+                    oldCanvas.width,
+                    oldCanvas.height,
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+            }
+        }
+
+
+        // =====================================
+        // POSIÇÃO DO TOQUE / MOUSE
+        // =====================================
+
         function getPosition(event) {
 
-            const rect = canvas.getBoundingClientRect();
+            const rect =
+                canvas.getBoundingClientRect();
 
             return {
-                x: event.clientX - rect.left,
-                y: event.clientY - rect.top
+
+                x:
+                    event.clientX -
+                    rect.left,
+
+                y:
+                    event.clientY -
+                    rect.top
             };
         }
 
 
-        /*
-         * Começa um novo traço.
-         *
-         * IMPORTANTE:
-         * A cor muda somente quando começa
-         * um novo traço.
-         */
+        // =====================================
+        // COMEÇAR DESENHO
+        // =====================================
+
         function startDrawing(event) {
+
+            event.preventDefault();
 
             drawing = true;
 
-            // Nova cor para este traço
-            currentColor = randomColor();
+            // Nova cor para cada novo traço
+            currentColor =
+                randomColor();
 
             updateColorIndicator();
 
-            const position = getPosition(event);
+            const position =
+                getPosition(event);
 
             ctx.beginPath();
 
@@ -293,24 +454,32 @@
         }
 
 
-        /*
-         * Desenha enquanto o mouse/toque
-         * estiver sendo movimentado.
-         */
+        // =====================================
+        // DESENHAR
+        // =====================================
+
         function draw(event) {
 
             if (!drawing) {
                 return;
             }
 
-            const position = getPosition(event);
+            event.preventDefault();
 
-            ctx.lineWidth = brushSize.value;
+            const position =
+                getPosition(event);
 
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
+            ctx.lineWidth =
+                Number(brushSize.value);
 
-            ctx.strokeStyle = currentColor;
+            ctx.lineCap =
+                "round";
+
+            ctx.lineJoin =
+                "round";
+
+            ctx.strokeStyle =
+                currentColor;
 
             ctx.lineTo(
                 position.x,
@@ -321,10 +490,10 @@
         }
 
 
-        /*
-         * Desenha um pequeno ponto quando
-         * o usuário apenas clica.
-         */
+        // =====================================
+        // PONTO
+        // =====================================
+
         function drawDot(x, y) {
 
             ctx.beginPath();
@@ -332,21 +501,27 @@
             ctx.arc(
                 x,
                 y,
-                brushSize.value / 2,
+                Number(brushSize.value) / 2,
                 0,
                 Math.PI * 2
             );
 
-            ctx.fillStyle = currentColor;
+            ctx.fillStyle =
+                currentColor;
 
             ctx.fill();
         }
 
 
-        /*
-         * Para o desenho.
-         */
+        // =====================================
+        // PARAR DESENHO
+        // =====================================
+
         function stopDrawing() {
+
+            if (!drawing) {
+                return;
+            }
 
             drawing = false;
 
@@ -354,9 +529,10 @@
         }
 
 
-        /*
-         * Eventos do mouse
-         */
+        // =====================================
+        // EVENTOS DE DESENHO
+        // =====================================
+
         canvas.addEventListener(
             "pointerdown",
             startDrawing
@@ -383,9 +559,10 @@
         );
 
 
-        /*
-         * Alteração do tamanho do pincel.
-         */
+        // =====================================
+        // TAMANHO DO PINCEL
+        // =====================================
+
         brushSize.addEventListener(
             "input",
             () => {
@@ -396,14 +573,16 @@
         );
 
 
-        /*
-         * Limpar o quadro.
-         */
+        // =====================================
+        // LIMPAR
+        // =====================================
+
         clearButton.addEventListener(
             "click",
             () => {
 
-                ctx.fillStyle = "white";
+                ctx.fillStyle =
+                    "white";
 
                 ctx.fillRect(
                     0,
@@ -415,20 +594,93 @@
         );
 
 
-        /*
-         * Inicialização
-         */
+        // =====================================
+        // FULLSCREEN
+        // =====================================
+
+        fullscreenButton.addEventListener(
+            "click",
+            async () => {
+
+                try {
+
+                    if (!document.fullscreenElement) {
+
+                        await document.documentElement
+                            .requestFullscreen();
+
+                        fullscreenButton.textContent =
+                            "✕";
+
+                    } else {
+
+                        await document.exitFullscreen();
+
+                        fullscreenButton.textContent =
+                            "⛶";
+                    }
+
+                } catch (error) {
+
+                    console.log(
+                        "Fullscreen não disponível:",
+                        error
+                    );
+                }
+            }
+        );
+
+
+        // =====================================
+        // ATUALIZAR BOTÃO FULLSCREEN
+        // =====================================
+
+        document.addEventListener(
+            "fullscreenchange",
+            () => {
+
+                if (document.fullscreenElement) {
+
+                    fullscreenButton.textContent =
+                        "✕";
+
+                } else {
+
+                    fullscreenButton.textContent =
+                        "⛶";
+                }
+
+                // Recalcula tamanho do quadro
+                setTimeout(
+                    resizeCanvas,
+                    100
+                );
+            }
+        );
+
+
+        // =====================================
+        // INICIALIZAÇÃO
+        // =====================================
+
         resizeCanvas();
 
         updateColorIndicator();
 
 
-        /*
-         * Redimensionamento da janela.
-         */
+        // =====================================
+        // REDIMENSIONAMENTO
+        // =====================================
+
         window.addEventListener(
             "resize",
-            resizeCanvas
+            () => {
+
+                setTimeout(
+                    resizeCanvas,
+                    100
+                );
+            }
         );
 
     </script>
