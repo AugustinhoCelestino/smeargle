@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Quadro Branco</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #eeeeee;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Barra superior */
+        .toolbar {
+            height: 60px;
+            background: #222;
+            color: white;
+
+            display: flex;
+            align-items: center;
+            gap: 15px;
+
+            padding: 10px 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+
+            z-index: 10;
+        }
+
+        .toolbar h1 {
+            font-size: 18px;
+            margin-right: auto;
+        }
+
+        .toolbar button {
+            border: none;
+            border-radius: 8px;
+
+            padding: 10px 15px;
+
+            background: #444;
+            color: white;
+
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .toolbar button:hover {
+            background: #555;
+        }
+
+        .brush-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brush-control input {
+            width: 100px;
+        }
+
+        /* Área do quadro */
+        .board-container {
+            flex: 1;
+            position: relative;
+
+            background: white;
+
+            overflow: hidden;
+        }
+
+        canvas {
+            position: absolute;
+
+            left: 0;
+            top: 0;
+
+            width: 100%;
+            height: 100%;
+
+            cursor: crosshair;
+
+            touch-action: none;
+        }
+
+        /* Indicador da cor atual */
+        .color-indicator {
+            width: 25px;
+            height: 25px;
+
+            border-radius: 50%;
+
+            border: 2px solid white;
+
+            box-shadow: 0 0 0 1px #777;
+        }
+
+        @media (max-width: 600px) {
+
+            .toolbar {
+                height: auto;
+                min-height: 60px;
+
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .toolbar h1 {
+                width: 100%;
+                margin: 0;
+            }
+
+            .brush-control input {
+                width: 80px;
+            }
+
+            .toolbar button {
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="toolbar">
+
+        <h1>🎨 Quadro Branco</h1>
+
+        <div class="brush-control">
+            <span>🖌️</span>
+
+            <input
+                type="range"
+                id="brushSize"
+                min="1"
+                max="50"
+                value="5"
+            >
+
+            <span id="brushSizeValue">5</span>
+        </div>
+
+        <div
+            id="colorIndicator"
+            class="color-indicator"
+        ></div>
+
+        <button id="clearButton">
+            🗑️ Limpar
+        </button>
+
+    </div>
+
+    <div class="board-container">
+
+        <canvas id="board"></canvas>
+
+    </div>
+
+    <script>
+
+        const canvas = document.getElementById("board");
+        const ctx = canvas.getContext("2d");
+
+        const brushSize = document.getElementById("brushSize");
+        const brushSizeValue = document.getElementById("brushSizeValue");
+        const clearButton = document.getElementById("clearButton");
+        const colorIndicator = document.getElementById("colorIndicator");
+
+        let drawing = false;
+
+        let currentColor = randomColor();
+
+
+        /*
+         * Ajusta o tamanho real do canvas
+         * de acordo com o tamanho da tela.
+         */
+        function resizeCanvas() {
+
+            const rect = canvas.getBoundingClientRect();
+
+            // Guarda o desenho atual
+            const image = canvas.width > 0 && canvas.height > 0
+                ? canvas.toDataURL()
+                : null;
+
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            // Fundo branco
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Restaura o desenho
+            if (image) {
+
+                const img = new Image();
+
+                img.onload = () => {
+                    ctx.drawImage(
+                        img,
+                        0,
+                        0,
+                        canvas.width,
+                        canvas.height
+                    );
+                };
+
+                img.src = image;
+            }
+        }
+
+
+        /*
+         * Gera uma cor RGB aleatória.
+         */
+        function randomColor() {
+
+            const r = Math.floor(Math.random() * 256);
+            const g = Math.floor(Math.random() * 256);
+            const b = Math.floor(Math.random() * 256);
+
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+
+        /*
+         * Atualiza o indicador da cor.
+         */
+        function updateColorIndicator() {
+
+            colorIndicator.style.backgroundColor = currentColor;
+        }
+
+
+        /*
+         * Obtém a posição do mouse/toque
+         * dentro do canvas.
+         */
+        function getPosition(event) {
+
+            const rect = canvas.getBoundingClientRect();
+
+            return {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+        }
+
+
+        /*
+         * Começa um novo traço.
+         *
+         * IMPORTANTE:
+         * A cor muda somente quando começa
+         * um novo traço.
+         */
+        function startDrawing(event) {
+
+            drawing = true;
+
+            // Nova cor para este traço
+            currentColor = randomColor();
+
+            updateColorIndicator();
+
+            const position = getPosition(event);
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                position.x,
+                position.y
+            );
+
+            drawDot(
+                position.x,
+                position.y
+            );
+        }
+
+
+        /*
+         * Desenha enquanto o mouse/toque
+         * estiver sendo movimentado.
+         */
+        function draw(event) {
+
+            if (!drawing) {
+                return;
+            }
+
+            const position = getPosition(event);
+
+            ctx.lineWidth = brushSize.value;
+
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+
+            ctx.strokeStyle = currentColor;
+
+            ctx.lineTo(
+                position.x,
+                position.y
+            );
+
+            ctx.stroke();
+        }
+
+
+        /*
+         * Desenha um pequeno ponto quando
+         * o usuário apenas clica.
+         */
+        function drawDot(x, y) {
+
+            ctx.beginPath();
+
+            ctx.arc(
+                x,
+                y,
+                brushSize.value / 2,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fillStyle = currentColor;
+
+            ctx.fill();
+        }
+
+
+        /*
+         * Para o desenho.
+         */
+        function stopDrawing() {
+
+            drawing = false;
+
+            ctx.closePath();
+        }
+
+
+        /*
+         * Eventos do mouse
+         */
+        canvas.addEventListener(
+            "pointerdown",
+            startDrawing
+        );
+
+        canvas.addEventListener(
+            "pointermove",
+            draw
+        );
+
+        canvas.addEventListener(
+            "pointerup",
+            stopDrawing
+        );
+
+        canvas.addEventListener(
+            "pointercancel",
+            stopDrawing
+        );
+
+        canvas.addEventListener(
+            "pointerleave",
+            stopDrawing
+        );
+
+
+        /*
+         * Alteração do tamanho do pincel.
+         */
+        brushSize.addEventListener(
+            "input",
+            () => {
+
+                brushSizeValue.textContent =
+                    brushSize.value;
+            }
+        );
+
+
+        /*
+         * Limpar o quadro.
+         */
+        clearButton.addEventListener(
+            "click",
+            () => {
+
+                ctx.fillStyle = "white";
+
+                ctx.fillRect(
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+            }
+        );
+
+
+        /*
+         * Inicialização
+         */
+        resizeCanvas();
+
+        updateColorIndicator();
+
+
+        /*
+         * Redimensionamento da janela.
+         */
+        window.addEventListener(
+            "resize",
+            resizeCanvas
+        );
+
+    </script>
+
+</body>
+</html>
